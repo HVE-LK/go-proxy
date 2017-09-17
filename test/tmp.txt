@@ -1,0 +1,35 @@
+2017/09/17 19:02:01 DumpRequestOut: POST /upload HTTP/1.1
+Host: 127.0.0.1:8080
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.8
+Cache-Control: max-age=0
+Connection: keep-alive
+Content-Length: 1009931
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundarysOBzTgxqvJ74T65Q
+Origin: http://127.0.0.1:8080
+Referer: http://127.0.0.1:8080/upload
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36
+
+
+
+
+2017/09/17 19:03:23 DumpRequestOut: POST /upload HTTP/1.1
+Host: 127.0.0.1:8080
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.8
+Cache-Control: max-age=0
+Connection: keep-alive
+Content-Length: 1009931
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryaRRokcF3Rn9nEWA9
+Origin: http://127.0.0.1:8080
+Referer: http://127.0.0.1:8080/upload
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.79 Safari/537.36
+
+------WebKitFormBoundaryaRRokcF3Rn9nEWA9
+Content-Disposition: form-data; name="file"; filename="ChMkJllu_bSIVom7AA9oLERVdMQAAe2AwGZcZ8AD2hE515.png"
+Content-Type: image/png
+
