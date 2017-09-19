@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"fmt"
 	"sync"
+	"io"
 )
+
 /*
 隧道
 */
@@ -15,6 +17,7 @@ type Turn struct {
 	Tid       int
 	Ln        net.Listener //隧道
 	Tcp       net.Conn
+	State     bool
 	OnlyRead  chan *DataPipe
 	OnlyWrite chan *DataPipe
 }
@@ -36,7 +39,7 @@ type heartbeat struct {
 
 //数据统计
 type ProxyObjects struct {
-	Tid               int `隧道id`
+	Tid               int     `隧道id`
 	Uid               int     `用户id`
 	State             bool    `用户状态`
 	UpstreamBandWidth float32 `上行流量`
@@ -48,22 +51,25 @@ type turnFac struct {
 	/*创建隧道，创建对应服务 */
 	turn *Turn
 }
+
 var (
-	tid int=0
-	TurnLink    = make(map[int]*Turn)
-	TurnState=make(map[int]*ProxyObjects)
-	lock sync.Mutex
+	tid       int = 0
+	TurnLink      = make(map[int]*Turn)
+	TurnState     = make(map[int]*ProxyObjects)
+	lock      sync.Mutex
 )
 //隧道初始化
-func Start()  {
+func Start() {
 
 }
+
 //发送隧道数据
-func SendData(data interface{}){
+func SendData(data interface{}) {
 
 }
+
 //创建新隧道
-func (this *turnFac)CreateTurn(ServicePort int,PrivatePort int)error{
+func (this *turnFac) CreateTurn(ServicePort int, PrivatePort int) error {
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(ServicePort))
 	if err != nil {
 		fmt.Errorf("start fail in %s %s", ServicePort, err)
@@ -76,52 +82,59 @@ func (this *turnFac)CreateTurn(ServicePort int,PrivatePort int)error{
 			continue
 		}
 		//生成客户端uuid 保存客户端连接
-		turnId:=editTid()
+		turnId := editTid()
 		currTurn := &Turn{
 			GetUuid(),
 			turnId,
 			ln,
 			conn,
+			false,
 			make(chan *DataPipe),
 			make(chan *DataPipe),
 		}
-		private:=new(ProxyService)
-		private.CreateClientService(PrivatePort,"http",this.turn.Tid)
-		TurnLink[this.turn.Tid],this.turn = currTurn,currTurn
+		private := new(ProxyService)
+		private.CreateClientService(PrivatePort, "http", this.turn.Tid)
+		TurnLink[this.turn.Tid], this.turn = currTurn, currTurn
 		go this.handleConnection()
 	}
 }
-func (this *turnFac)CloseTurn()(err error){
-	err=TurnLink[this.turn.Tid].Ln.Close()
-	if err!=nil {
+func (this *turnFac) CloseTurn() (err error) {
+	err = TurnLink[this.turn.Tid].Ln.Close()
+	if err != nil {
 		return err
 	}
 	return nil
 }
-func (this *turnFac)GetTurnState()(*ProxyObjects){
-	return  TurnState[this.turn.Tid]
+func (this *turnFac) GetTurnState() (*ProxyObjects) {
+	return TurnState[this.turn.Tid]
 }
-func (this *turnFac)handleConnection()  {
-	conn:=this.turn.Tcp
-	buffer:=make([]byte,65535)
+func (this *turnFac) handleConnection() {
+	conn := this.turn.Tcp
+	buffer := make([]byte, 65535)
 	go func() {
-		onceData:=new(DataPipe)
-		for{
-			n,err:=conn.Read(buffer)
-			if err==nil{
-				onceData.Data=buffer[:n]
-				this.turn.OnlyRead<-onceData
-			}else {
+		onceData := new(DataPipe)
+		for {
+			n, err := conn.Read(buffer)
+			if err == nil {
+				onceData.Data = buffer[:n]
+				this.turn.OnlyRead <- onceData //写入响应
+			} else if err == io.EOF {
+				//响应数据结束 写入响应结束标识
+				//关闭关闭管道
 				close(this.turn.OnlyRead)
+			} else {
+
 			}
 		}
 	}()
 	go func() {
-		conn.Write((<-this.turn.OnlyWrite).Data)
+		for {
+			//写入数据
+			conn.Write((<-this.turn.OnlyWrite).Data)
+		}
 	}()
 }
-
-func editTid()  (tid int){
+func editTid() (tid int) {
 	lock.Lock()
 	tid++
 	defer lock.Unlock()

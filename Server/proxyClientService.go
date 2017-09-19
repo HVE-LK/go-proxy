@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"net/http/httputil"
 	"log"
+	"io"
+	"fmt"
 )
 
 //监听服务
@@ -35,16 +37,22 @@ func (this *ProxyService)CreateClientService(port int,deal string,Tid int) error
 					if err==nil{
 						dataFormat.Data=buffer[:n]
 						onceTrun.OnlyWrite<-dataFormat
-					}else {
+					}else if err==io.EOF {
+						//数据写入结束 请求数据转发完毕
 						close(onceTrun.OnlyWrite)//数据写入完成
+					}else {
+						fmt.Errorf("data write is err in %s",err)
 					}
 				}
 			}else {
 				onceTrun.OnlyWrite<-dataFormat
 			}
-			resData:=<-onceTrun.OnlyRead
-			// 解析resData 响应数据 由隧道端关闭
-			writer.Write(resData.Data)
+			for{
+				resData:=<-onceTrun.OnlyRead
+				// 解析resData 响应数据 由隧道端关闭
+				writer.Write(resData.Data)
+			}
+
 			log.Println("数据发送完成...")
 		})
 	}else {

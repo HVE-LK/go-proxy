@@ -18,6 +18,7 @@ func load_success(w http.ResponseWriter, r *http.Request) {
 
 }
 
+var pipe chan []byte = make(chan []byte)
 //上传
 func uploadHandle(w http.ResponseWriter, r *http.Request) {
 	//从请求当中判断方法
@@ -25,29 +26,28 @@ func uploadHandle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		io.WriteString(w, "<html><head><title>上传</title></head>"+
 			"<body><form action='#' method=\"post\" enctype=\"multipart/form-data\">"+
-			"<label>上传图片</label>"+":"+
+			"<label>上传图片</label>"+ ":"+
 			"<input type=\"file\" name='file'  /><br/><br/>    "+
 			"<label><input type=\"submit\" value=\"上传图片\"/></label></form></body></html>")
 	} else {
 		fmt.Println("开始上传")
 		//获取文件内容 要这样获取
 		fmt.Println("开始获取数据")
-		reqdata,err:=httputil.DumpRequest(r,false)
-		buff:=make([]byte,65535)
-		for{
-			n,err:=r.Body.Read(buff)
+		reqdata, err := httputil.DumpRequest(r, false)
+		buff := make([]byte, 1024)
+		for {
+			n, err := r.Body.Read(buff)
+			pipe <- buff[:n]
 			if err != nil {
 				break
 			}
 			log.Println(n)
 		}
-		if err!=nil{
-			log.Println("reqdata",string(reqdata))
-		}else{
-			log.Println("DumpRequestOut:",string(reqdata))
+		if err != nil {
+			log.Println("reqdata", string(reqdata))
+		} else {
+			log.Println("DumpRequestOut:", string(reqdata))
 		}
-
-
 
 		file, head, err := r.FormFile("file")
 		fmt.Println("开始获取数据")
@@ -76,6 +76,11 @@ func uploadHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	go func() {
+		for {
+			log.Println("数据", <-pipe)
+		}
+	}()
 	fmt.Println("OK!")
 	//启动一个http 服务器
 	http.HandleFunc("/success", load_success)
